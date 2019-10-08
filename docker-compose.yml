@@ -1,0 +1,94 @@
+version: '3' 
+
+services:
+  app: 
+    build: .
+    command: yarn dev
+    depends_on:
+      - kafka
+    volumes: 
+      - .:/usr/app
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 30s
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:latest
+    # hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    depends_on:
+      - zookeeper
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 30s
+    environment:
+      KAFKA_BROKER_ID: 1
+      # KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_LISTENERS: INSIDE://kafka:9092,OUTSIDE://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      # KAFKA_DELETE_TOPIC_ENABLE: TRUE
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "email_test:1:1, email_test_error:1:1"
+      # KAFKA_MESSAGE_MAX_BYTES: 104857600
+      # KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      # KAFKA_FETCH_MAX_BYTES: 104857600
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # logging:
+    #   driver: none
+
+
+############################ 
+######## Commands ##########
+############################
+
+# Start
+# docker-compose up --no-recreate
+
+# Start background
+# docker-compose up -d 
+
+# Stop
+# docker-compose stop
+
+# List
+# docker-compose ps 
+
+# Pull
+# sudo docker login
+# docker pull wurstmeister/kafka
+# docker pull wurstmeister/zookeeper
+
+# Shell (Bash)
+# docker exec -i -t 44c3f89414816f67b2ad5f2edb950b18256b6f1ea2f8ee076c0825ff955173ae /bin/bash
+
+# IP
+# ip route show
+
+# Status
+# docker-compose logs zookeeper | grep -i binding
+# docker-compose logs kafka | grep -i started
+
+
+# opt/kafka/bin/kafka-topics.sh --list --zookeeper zookeeper:2181
+# opt/kafka/bin/kafka-topics.sh --describe --zookeeper zookeeper:2181 --topic email_test
+# opt/kafka/bin/kafka-topics.sh — zookeeper zookeeper:2181 — delete — topic (delete.topic.enable=true)
+
+# opt/zookeeper-3.4.13/bin/zkCli.sh -server zookeeper:2181
+# ls /brokers/ids  # Gives the list of active brokers
+# ls /brokers/topics #Gives the list of topics
+# get /brokers/ids/1 #Gives more detailed information of the broker id '0'
