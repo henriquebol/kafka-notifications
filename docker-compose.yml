@@ -8,6 +8,7 @@ services:
       - kafka
     volumes: 
       - .:/usr/app
+      - "nfsmount:/usr/app/midias" 
   zookeeper:
     image: wurstmeister/zookeeper:latest
     deploy:
@@ -50,7 +51,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     # logging:
     #   driver: none
-
+volumes:
+  nfsmount:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=[IP_NFS]
+      device: ":/mnt/sharedfolder"
 
 ############################ 
 ######## Commands ##########
@@ -88,7 +95,16 @@ services:
 # opt/kafka/bin/kafka-topics.sh --describe --zookeeper zookeeper:2181 --topic email_test
 # opt/kafka/bin/kafka-topics.sh — zookeeper zookeeper:2181 — delete — topic (delete.topic.enable=true)
 
-# opt/zookeeper-3.4.13/bin/zkCli.sh -server zookeeper:2181
+# Get Offsets for the topic
+# opt/kafka/bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list kafka:9092 -topic email_test --time -1
+
+
+# bin/zkCli.sh -server zookeeper:2181 # Connect Zookeeper
+
+# Set the offset manually
+# ls /consumers/flasfka/offsets/email_test 
+# set /consumers/flasfka/offsets/email_test/0 14
+
 # ls /brokers/ids  # Gives the list of active brokers
 # ls /brokers/topics #Gives the list of topics
 # get /brokers/ids/1 #Gives more detailed information of the broker id '0'
